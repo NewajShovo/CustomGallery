@@ -15,6 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 //@property (nonatomic) IBOutlet UILabel *Label;
 @property (nonatomic) id observer;
 @property (nonatomic) PHAsset *asset;
+
+
 // Container Size
 @property (nonatomic) CGSize containerSize;
 @end

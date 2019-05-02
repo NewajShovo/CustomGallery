@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A098EDC92271DD0F0007874A /* EndArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A098EDC82271DD0F0007874A /* EndArrow.png */; };
+		A098EDCB2271DD160007874A /* StartArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A098EDCA2271DD150007874A /* StartArrow.png */; };
+		A098EDD12271EE120007874A /* SeekBar.m in Sources */ = {isa = PBXBuildFile; fileRef = A098EDD02271EE120007874A /* SeekBar.m */; };
 		A0D3E533227062AB0087574E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A0D3E532227062AB0087574E /* AppDelegate.m */; };
 		A0D3E536227062AB0087574E /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A0D3E535227062AB0087574E /* ViewController.m */; };
 		A0D3E539227062AB0087574E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A0D3E537227062AB0087574E /* Main.storyboard */; };
@@ -41,6 +44,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A098EDC82271DD0F0007874A /* EndArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = EndArrow.png; sourceTree = "<group>"; };
+		A098EDCA2271DD150007874A /* StartArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = StartArrow.png; sourceTree = "<group>"; };
+		A098EDCF2271EE120007874A /* SeekBar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeekBar.h; sourceTree = "<group>"; };
+		A098EDD02271EE120007874A /* SeekBar.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeekBar.m; sourceTree = "<group>"; };
 		A0D3E52E227062AB0087574E /* CustomGallery.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CustomGallery.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0D3E531227062AB0087574E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		A0D3E532227062AB0087574E /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -119,6 +126,10 @@
 			children = (
 				A0D3E531227062AB0087574E /* AppDelegate.h */,
 				A0D3E532227062AB0087574E /* AppDelegate.m */,
+				A098EDC82271DD0F0007874A /* EndArrow.png */,
+				A098EDCA2271DD150007874A /* StartArrow.png */,
+				A098EDCF2271EE120007874A /* SeekBar.h */,
+				A098EDD02271EE120007874A /* SeekBar.m */,
 				A0D3E56B22706F910087574E /* ShowImage */,
 				A0D3E56C22706FB30087574E /* PhotoCellCustom */,
 				A0D3E53A227062AB0087574E /* Assets.xcassets */,
@@ -288,6 +299,8 @@
 				A0D3E53E227062AB0087574E /* LaunchScreen.storyboard in Resources */,
 				A0D3E53B227062AB0087574E /* Assets.xcassets in Resources */,
 				A0D3E5812270A12E0087574E /* showVideoViewController.xib in Resources */,
+				A098EDC92271DD0F0007874A /* EndArrow.png in Resources */,
+				A098EDCB2271DD160007874A /* StartArrow.png in Resources */,
 				A0D3E539227062AB0087574E /* Main.storyboard in Resources */,
 				A0D3E56A22706B540087574E /* showImageViewController.xib in Resources */,
 			);
@@ -315,6 +328,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A0D3E5802270A12E0087574E /* showVideoViewController.m in Sources */,
+				A098EDD12271EE120007874A /* SeekBar.m in Sources */,
 				A0D3E536227062AB0087574E /* ViewController.m in Sources */,
 				A0D3E575227089BF0087574E /* PlayerView.m in Sources */,
 				A0D3E565227063160087574E /* photoCellCollectionViewCell.m in Sources */,

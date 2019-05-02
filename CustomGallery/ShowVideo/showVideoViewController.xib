@@ -22,16 +22,30 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <view contentMode="scaleAspectFill" translatesAutoresizingMaskIntoConstraints="NO" id="1ff-n1-OUa" customClass="PlayerView">
-                    <rect key="frame" x="0.0" y="20" width="375" height="440"/>
+                    <rect key="frame" x="0.0" y="20" width="375" height="341"/>
+                    <subviews>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="JhZ-fN-fQT">
+                            <rect key="frame" x="140.5" y="155.5" width="94" height="30"/>
+                            <state key="normal" title="Play"/>
+                            <connections>
+                                <action selector="PlayButtonClicked:" destination="-1" eventType="touchUpInside" id="rZS-lp-uv4"/>
+                            </connections>
+                        </button>
+                    </subviews>
                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <constraints>
+                        <constraint firstItem="JhZ-fN-fQT" firstAttribute="centerY" secondItem="1ff-n1-OUa" secondAttribute="centerY" id="3IG-jd-ukW"/>
+                        <constraint firstItem="JhZ-fN-fQT" firstAttribute="width" secondItem="1ff-n1-OUa" secondAttribute="width" multiplier="0.25" id="gL1-Pi-hOL"/>
+                        <constraint firstItem="JhZ-fN-fQT" firstAttribute="centerX" secondItem="1ff-n1-OUa" secondAttribute="centerX" id="gqn-J7-z5S"/>
+                    </constraints>
                 </view>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
-                <constraint firstItem="Q5M-cg-NOt" firstAttribute="bottom" secondItem="1ff-n1-OUa" secondAttribute="bottom" constant="207" id="ZkP-mj-DM9"/>
-                <constraint firstItem="1ff-n1-OUa" firstAttribute="trailing" secondItem="Q5M-cg-NOt" secondAttribute="trailing" id="o7j-ds-ISK"/>
-                <constraint firstItem="1ff-n1-OUa" firstAttribute="top" secondItem="Q5M-cg-NOt" secondAttribute="top" id="tKb-io-KuS"/>
-                <constraint firstItem="1ff-n1-OUa" firstAttribute="leading" secondItem="Q5M-cg-NOt" secondAttribute="leading" id="xb1-NB-udV"/>
+                <constraint firstItem="1ff-n1-OUa" firstAttribute="trailing" secondItem="Q5M-cg-NOt" secondAttribute="trailing" id="C9K-1t-SO2"/>
+                <constraint firstItem="1ff-n1-OUa" firstAttribute="top" secondItem="Q5M-cg-NOt" secondAttribute="top" id="n4i-kC-pyF"/>
+                <constraint firstItem="Q5M-cg-NOt" firstAttribute="bottom" secondItem="1ff-n1-OUa" secondAttribute="bottom" constant="306" id="uor-8s-YUP"/>
+                <constraint firstItem="1ff-n1-OUa" firstAttribute="leading" secondItem="Q5M-cg-NOt" secondAttribute="leading" id="zx6-jt-kTf"/>
             </constraints>
             <viewLayoutGuide key="safeArea" id="Q5M-cg-NOt"/>
             <point key="canvasLocation" x="40.799999999999997" y="46.326836581709152"/>
