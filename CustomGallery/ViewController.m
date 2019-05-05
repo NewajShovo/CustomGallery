@@ -23,6 +23,7 @@ bool flag =true;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
     [self loadData];
     
     

@@ -15,6 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 //@property (nonatomic) IBOutlet UILabel *Label;
 @property (nonatomic) id observer;
 @property (nonatomic) PHAsset *asset;
+@property (weak, nonatomic) IBOutlet UIButton *button;
+@property (strong, nonatomic) IBOutlet UIView *frameView;
+@property (weak, nonatomic) IBOutlet UIView *Scrollview;
 
 
 // Container Size
