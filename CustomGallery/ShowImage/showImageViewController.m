@@ -14,6 +14,7 @@
 @implementation showImageViewController
 
 - (void)viewDidLoad {
+   
     [super viewDidLoad];
     PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
     requestOptions.resizeMode   = PHImageRequestOptionsResizeModeExact;

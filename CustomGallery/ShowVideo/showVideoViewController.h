@@ -18,7 +18,27 @@ NS_ASSUME_NONNULL_BEGIN
 @property (weak, nonatomic) IBOutlet UIButton *button;
 @property (strong, nonatomic) IBOutlet UIView *frameView;
 @property (weak, nonatomic) IBOutlet UIView *Scrollview;
+@property (weak, nonatomic) IBOutlet UIView *start;
+@property (weak, nonatomic) IBOutlet UIView *end;
+//@property (nonatomic,readonly) BOOL prefersStatusBarHidden;
 
+@property (weak, nonatomic) IBOutlet UIView *mainView;
+
+@property (strong, nonatomic) IBOutlet UIImageView *splitImage;
+
+@property (weak, nonatomic) IBOutlet UIView *startArrow;
+@property (weak, nonatomic) IBOutlet UIView *endArrow;
+
+@property (weak, nonatomic) IBOutlet UILabel *endLabel;
+@property (weak, nonatomic) IBOutlet UILabel *midLabel;
+@property (weak, nonatomic) IBOutlet UILabel *startLabel;
+
+@property (weak, nonatomic) IBOutlet UIImageView *movingView;
+
+@property (strong, nonatomic) IBOutlet UIImageView *startImage;
+
+@property (strong, nonatomic) IBOutlet UIImageView *endImage;
+@property (strong, nonatomic) IBOutlet UIView *splitView;
 
 // Container Size
 @property (nonatomic) CGSize containerSize;

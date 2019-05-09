@@ -20,10 +20,16 @@
 
 @implementation ViewController
 bool flag =true;
-
+-(BOOL) prefersStatusBarHidden{
+    return  NO;
+}
 - (void)viewDidLoad {
-    [super viewDidLoad];
     
+    [self.navigationController.navigationBar setBarTintColor:[UIColor blackColor]];
+    self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+    self.navigationController.navigationBar.translucent = NO;
+    self.navigationController.interactivePopGestureRecognizer.enabled = NO;
+    [super viewDidLoad];
     [self loadData];
     
     

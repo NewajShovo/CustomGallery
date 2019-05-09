@@ -21,6 +21,7 @@
 @end
 
 @implementation photoCellCollectionViewCell
+
 #pragma mark - set asset
 - (void) setAsset:(PHAsset *)asset
 {

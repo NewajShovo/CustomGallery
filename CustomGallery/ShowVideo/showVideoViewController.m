@@ -9,52 +9,91 @@
 #import "showVideoViewController.h"
 #import "PlayerView.h"
 
+
 @interface showVideoViewController ()
 
 @property (weak,nonatomic) IBOutlet PlayerView *playerView;
 @property (nonatomic) AVPlayer *player;
 @property (strong, nonatomic) AVPlayerItem *playerItem;
-//@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+@property (strong, nonatomic) IBOutlet UISegmentedControl *segmentControl;
 
+
+
+@property (weak, nonatomic) IBOutlet UILabel *lbl;
 #define SCREEN_WIDTH ([[UIScreen mainScreen] bounds].size.width)
 #define SCREEN_HEIGHT ([[UIScreen mainScreen] bounds].size.height)
 
-@end
+@property (strong, nonatomic) IBOutlet UIView *startShadow;
 
+@property (strong, nonatomic) IBOutlet UIView *endShadow;
+
+
+
+@end
+int playButtonClicked=0;
 int framegenerate=1;
 int cnt=0;
 BOOL img_gen_cmplt =YES;
 @implementation showVideoViewController {
-  UIImageView *startArrow;
-    UIImageView *endArrow;
+    
     UISlider * myslider;
-
-
     AVAssetImageGenerator *imageGenerator;
     CMTime startTime;
     CMTime endTime;
     AVAsset *resultAsset;
-    UIView *view1;
-    UIView *tempView ;
-    UIView *movingview;
-    float Time,add,val,val1,endArrowTime,startArrowTime,sliderValue;
+   
+    float Time,val,val1;
+    float startArrowHalfWidth,endArrowHalfWidth;
+    
+    //Frame generation
     int total_no_frames;
-    double movement;
     int pore_nibo;
+    float imgHeight;
+    float imgWidth ;
+}
 
+///Which segment is Pressed;
+bool trimPressed=YES;
+bool cutPressed =NO;
+bool splitPressed = NO;
 
-
-
+@synthesize startArrow,endArrow;
+-(BOOL) prefersStatusBarHidden{
+    return YES;
 }
 
 
-
+#pragma mark - view Did load;
 
 - (void)viewDidLoad {
+    
+    
+    
+    [self.navigationController.navigationBar setBarTintColor:[UIColor colorWithRed:36.f/255.f green:36.f/255.f blue:36.f/255.f alpha:1]];
+    // Navigation bar Title created Here
+    self.navigationItem.title = @"Custom Gallery";
+    [self.navigationController.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor colorWithRed:191.f/255.f green:191.f/255.f blue:191.f/255.f alpha:1]}];
+
+    
+    UIImage *lftbtnImage = [ UIImage imageNamed:@"Group 550"];
+    UIBarButtonItem *lftBtn= [ [ UIBarButtonItem alloc] initWithImage:lftbtnImage style:UIBarButtonItemStyleDone target:self action:@selector(backButtonPressed)];
+    self.navigationItem.leftBarButtonItem = lftBtn;
+    self.navigationItem.leftBarButtonItem.enabled = YES;
+    
+    UIImage *rgtbtnImage = [ UIImage imageNamed:@"Path 844"];
+    UIBarButtonItem *rgtBtn= [ [ UIBarButtonItem alloc] initWithImage:rgtbtnImage style:UIBarButtonItemStylePlain target:self action:nil];
+    self.navigationItem.rightBarButtonItem =  rgtBtn;
+    self.navigationItem.rightBarButtonItem.enabled = YES;
+//    self.navigationItem.rightBarButtonItem.tintColor=[UIColor colorWithRed:255 green:125 blue:38 alpha:1];
+   self.navigationItem.rightBarButtonItem.tintColor = [UIColor colorWithRed:255.f/255.f green:125.f/255.f blue:38.f/255.f alpha:1];
+    
+    
+//    add.imageView.image=@"Group 643";
+    
     cnt=0;
     img_gen_cmplt =YES;
     [super viewDidLoad];
-    // Do any additional setup after loading the view from its nib.
+
     dispatch_semaphore_t    semaphore = dispatch_semaphore_create(0);
 
     PHVideoRequestOptions *option = [PHVideoRequestOptions new];
@@ -64,21 +103,38 @@ BOOL img_gen_cmplt =YES;
         dispatch_semaphore_signal(semaphore);
     }];
 
+    
+    
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
 
     _playerItem = [AVPlayerItem playerItemWithAsset:resultAsset];
     _player = [AVPlayer playerWithPlayerItem:self.playerItem];
     _playerView.player = _player;
     NSLog(@"%f %f",_frameView.frame.size.height,self.frameView.frame.size.width);
-    
+//    lbl.text
     float xx= ((ceil(_asset.duration)));
     Time = _asset.duration;
+    
+    
+   CMTime timeforShowing =CMTimeMake(_asset.duration,NSEC_PER_SEC);
+    // First, create NSDate object using
+    NSDateComponentsFormatter *dcFormatter = [[NSDateComponentsFormatter alloc] init];
+    dcFormatter.zeroFormattingBehavior = NSDateComponentsFormatterZeroFormattingBehaviorPad;
+    dcFormatter.allowedUnits = NSCalendarUnitMinute |NSCalendarUnitSecond;
+    dcFormatter.unitsStyle = NSDateComponentsFormatterUnitsStylePositional;
+    NSString* result=[dcFormatter stringFromTimeInterval:Time];
+    NSLog(@"%@",result);
+    NSString *str =@"TOTAL ";
+    result=[NSString stringWithFormat:@"%@ %@",str,result];
+    _lbl.text=result;
+    _lbl.textColor=[UIColor lightGrayColor];
+    
     total_no_frames =(floor)(Time*framegenerate);
     NSLog(@"%f, %d",Time,total_no_frames);
     pore_nibo=total_no_frames/8;
     NSLog(@"%d",pore_nibo);
     
-
+  
 //   //Creating a UISlider
 
     myslider = [ [ UISlider alloc] initWithFrame:CGRectMake(0, SCREEN_HEIGHT-50, SCREEN_WIDTH, 50)];
@@ -91,14 +147,103 @@ BOOL img_gen_cmplt =YES;
     [myslider addTarget:self action:@selector(sliderAction:) forControlEvents:UIControlEventValueChanged];
     myslider.hidden=YES;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-//        [self generateFramefromvideo:resultAsset];
         [self generateFrame:resultAsset];
-    });
+        });
     
+   
+//   [self generateFramefromvideo:resultAsset];
     [self generateUIView];
 
 
 }
+#pragma mark - UISegment pressed
+- (IBAction)UIsegmentPressed:(id)sender {
+    
+    NSLog(@"Value pressed");
+    if(_segmentControl.selectedSegmentIndex ==0)
+    {
+        trimPressed=YES;
+        cutPressed =NO;
+        splitPressed = NO;
+        [self trimPressed];
+    }
+    else if(_segmentControl.selectedSegmentIndex ==1 )
+    {
+        trimPressed=NO;
+        cutPressed =YES;
+        splitPressed = NO;
+        [self cutPressed];
+        NSLog(@"Cut Pressed");
+    }
+    else{
+        trimPressed=NO;
+        cutPressed =NO;
+        splitPressed = YES;
+        [self splitPressed];
+        NSLog(@"Split Pressed");
+    }
+    
+    
+    
+
+}
+-(void) trimPressed {
+    
+    _startImage.image = [ UIImage imageNamed:@"Group 640"];
+    _endImage.image  = [ UIImage imageNamed:@"Group 639"];
+    _splitView.backgroundColor = [ UIColor clearColor];
+    _splitImage.image = nil;
+    _movingView.image = [ UIImage imageNamed:@"Line 97"];
+    _movingView.image = [ UIImage imageNamed:@"Line 97"];
+    
+    NSLog(@"%f %f",_frameView.frame.origin.x,_Scrollview.frame.origin.x);
+    
+    double shadowWidth = _Scrollview.frame.size.width- (endArrow.center.x+2*endArrowHalfWidth)+3;
+    
+    _endShadow.frame =CGRectMake(endArrow.frame.origin.x+endArrowHalfWidth, endArrow.frame.origin.y,shadowWidth,_Scrollview.frame.size.height);
+    _endShadow.backgroundColor = [UIColor colorWithRed:41.f/255.f green:41.f/255.f blue:41.f/255.f alpha:.92];
+    
+    shadowWidth =(startArrow.center.x-startArrowHalfWidth+1)-_frameView.frame.origin.x;
+    
+    _startShadow.frame =CGRectMake(startArrow.frame.origin.x-shadowWidth, startArrow.frame.origin.y, shadowWidth,_Scrollview.frame.size.height);
+    _startShadow.backgroundColor = [UIColor colorWithRed:41.f/255.f green:41.f/255.f blue:41.f/255.f alpha:.92];
+    
+}
+- (void) cutPressed
+{
+    _startImage.image = [ UIImage imageNamed:@"Group 640"];
+    _endImage.image  = [ UIImage imageNamed:@"Group 639"];
+    _splitView.backgroundColor = [ UIColor clearColor];
+    _splitImage.image = nil;
+    _movingView.image = [ UIImage imageNamed:@"Line 97"];
+    double shadowWidth=endArrow.center.x - startArrow.center.x;
+    _endShadow.frame =CGRectMake(endArrow.frame.origin.x+(2*endArrowHalfWidth), endArrow.frame.origin.y,0,_Scrollview.frame.size.height);
+    _startShadow.frame =CGRectMake(startArrow.frame.origin.x+(2*startArrowHalfWidth), startArrow.frame.origin.y, shadowWidth,_Scrollview.frame.size.height);
+    _startShadow.backgroundColor = [UIColor colorWithRed:41.f/255.f green:41.f/255.f blue:41.f/255.f alpha:.92];
+    
+}
+-(void) splitPressed{
+    _endShadow.backgroundColor = [ UIColor clearColor];
+    _startShadow.backgroundColor=[ UIColor clearColor];
+    
+    
+    _startImage.image = nil;
+    _endImage.image  = nil;
+    _splitImage.image = [ UIImage imageNamed:@"Group 1033"];
+    
+    
+    
+    
+}
+
+#pragma  mark - back button is pressed
+
+-(void) backButtonPressed
+{
+    UINavigationController *navigationController = self.navigationController;
+    [navigationController popViewControllerAnimated:NO];
+}
+
 
 
 double p=0;
@@ -106,45 +251,94 @@ double xxx=0;
 #pragma mark - synscruber to sync with view
 - (void)syncScrubber
 {
-    NSLog(@"----%f",movingview.center.x);
-    if(movingview.center.x+p>endArrow.center.x-(endArrow.frame.size.width/2)){
+    if(playButtonClicked){
+    NSLog(@"syncScrubber");
+    val = (Time*((startArrow.center.x-startArrowHalfWidth)))/_frameView.frame.size.width;
+    val1=(Time*(endArrow.center.x-2*endArrowHalfWidth))/_frameView.frame.size.width;
+    
+    startTime=CMTimeMakeWithSeconds(val, NSEC_PER_SEC);
+    
+    
+    p= (endArrow.center.x-startArrow.center.x)/(val1-val);
+    p=p*.01;
+    
+    NSLog(@"%f %f",_movingView.center.x,_movingView.center.y);
 
-
-        [movingview setCenter:CGPointMake(endArrow.center.x-(((_Scrollview.frame.size.height/4)/2)), movingview.center.y)];
-        [movingview removeFromSuperview];
-        cnt=0;
+        
+        double change =(Time*((_movingView.center.x)))/_frameView.frame.size.width;
+        
+    NSDateComponentsFormatter *dcFormatter = [[NSDateComponentsFormatter alloc] init];
+    dcFormatter.zeroFormattingBehavior = NSDateComponentsFormatterZeroFormattingBehaviorPad;
+    dcFormatter.allowedUnits = NSCalendarUnitMinute |NSCalendarUnitSecond;
+    dcFormatter.unitsStyle = NSDateComponentsFormatterUnitsStylePositional;
+    NSString* result=[dcFormatter stringFromTimeInterval:change];
+//    startTime=CMTimeMakeWithSeconds(change, NSEC_PER_SEC);
+    _midLabel.text=result;
+    _midLabel.textColor =[UIColor whiteColor];
+    if(_movingView.center.x+p<endArrow.center.x-endArrowHalfWidth)
+    {
+        [_movingView setCenter:CGPointMake(_movingView.center.x+p, _movingView.center.y)];
+    }
+    else{
         [self.player pause];
     }
-    else [movingview setCenter:CGPointMake(movingview.center.x+p, movingview.center.y)];
+    }
+    
+    
+    else{
+    
+    }
+    
+    
 
 }
-#pragma mark - play button clicked
-- (IBAction)btnClicked:(id)sender {
-    NSLog(@"----%f----",_frameView.frame.size.width);
-    NSLog(@"---%f----%f--",startArrow.center.x,endArrow.center.x);
-    val = (Time/_frameView.frame.size.width)*(startArrow.center.x+add);
-    val1=(Time/_frameView.frame.size.width)*(endArrow.center.x-add);
-//    _button.hidden=YES;
+
+#pragma mark - calculate time
+- (void) timeCalculation{
+    playButtonClicked =1;
+    val = (Time*((startArrow.center.x-startArrowHalfWidth)))/_frameView.frame.size.width;
+    val1=(Time*(endArrow.center.x-2*endArrowHalfWidth))/_frameView.frame.size.width;
+    
     startTime=CMTimeMakeWithSeconds(val, NSEC_PER_SEC);
     [self.player seekToTime:startTime toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
     [self.player play];
-    if(cnt==0)[self creatMovingView];
     
-    p= (endArrow.center.x-startArrow.center.x-(2*add))/(val1-val);
-    p=p*.01;
-   // moving view created here
-    CMTime invoke = CMTimeMakeWithSeconds(0.01, NSEC_PER_SEC);
+    
+    
+}
+#pragma mark - play button clicked
+- (IBAction)btnClicked:(id)sender {
+
+    
+    if(_observer==nil){
+        NSLog(@"Yess");
+        [self timeCalculation];
+        [_movingView setCenter:CGPointMake(startArrow.center.x+startArrowHalfWidth, _movingView.center.y)];
+        
+
+
+    }
+    else{
+        [self.player removeTimeObserver:_observer];
+        [self timeCalculation];
+      if(_movingView.center.x>startArrow.center.x+startArrowHalfWidth && _movingView.center.x< endArrow.center.x-(endArrow.frame.size.width/2))
+      {
+          [_movingView setCenter:CGPointMake(_movingView.center.x, _movingView.center.y)];
+      }
+        else
+        {
+             [_movingView setCenter:CGPointMake(startArrow.center.x+startArrowHalfWidth, _movingView.center.y)];
+        }
+    }
+   CMTime invoke = CMTimeMakeWithSeconds(0.01, NSEC_PER_SEC);
     _observer=[_player addPeriodicTimeObserverForInterval:invoke
                                                     queue:NULL
                                                usingBlock:
                ^(CMTime time)
+               
                {
                    [self syncScrubber];
                }];
-
-
-
-//    NSLog(@"----%f %d-----",interval,cnt);
 
 
 }
@@ -155,23 +349,7 @@ double xxx=0;
 -(void) sliderAction:(id) temp
 {
 
-   add = (startArrow.frame.size.width/2);
 
-
-
-    // converting start arrow's value to time
-     val = (Time*([(UISlider *)temp value]+startArrow.center.x+add))/([(UISlider *)temp maximumValue]);
-    NSLog(@"%f",Time);
-    // converting end arrow's value to time
-     val1= (Time*([(UISlider *)temp value]+endArrow.center.x-add))/([(UISlider *)temp maximumValue]);
-
-    endTime = CMTimeMakeWithSeconds(val1, NSEC_PER_SEC);
-    startTime=CMTimeMakeWithSeconds(val, NSEC_PER_SEC);
-    endArrowTime= [(UISlider *)temp value]+endArrow.center.x;
-    sliderValue = [(UISlider *)temp value];
-
-
-//    [movingview removeFromSuperview];
 }
 
 #pragma mark - generating frame for video with asset reader
@@ -295,9 +473,10 @@ double xxx=0;
     
     imageGenerator = [[AVAssetImageGenerator alloc] initWithAsset:movieAsset];
     // Image Width from height with ratio
-    float imgHeight = self.frameView.frame.size.height;
-    float imgWidth = imgHeight;
-    
+//    NSLog(@"%f %f",_frameView.frame.size.height,self.frameVie
+//    NSLog(@"%f",self.frameView.frame.size.width);
+    imgHeight = self.frameView.frame.size.height;
+    imgWidth = imgHeight;
     // Time distance per frame
 //    Float64 timePerFrame = duration/_totalFrames;
     __block int i=0;
@@ -368,116 +547,307 @@ double xxx=0;
 
 
 
-
-#pragma  mark - creating moving view
--(void) creatMovingView
-{
-    movingview = [ [ UIView alloc] initWithFrame:CGRectMake((startArrow.center.x+((startArrow.frame.size.width/2))),startArrow.frame.origin.y-2,4,54)];
-    [_Scrollview addSubview:movingview];
-//    NSLog(@"%f %f %f",(startArrow.center.x+((_Scrollview.frame.size.height/4)/2)),movingview.center.x,(endArrow.center.x-((_Scrollview.frame.size.height/4)/2)));
-    movingview.backgroundColor = [UIColor whiteColor];
-    movingview.layer.cornerRadius=2;
-    movingview.layer.masksToBounds=true;
-//    [movingview backgroundColor]
-}
-
-
-
-
-//#pragma mark - Generating UI View like start arrow,end arrow;
+#pragma mark - Generating UI View like start arrow,end arrow;
 
 -(void) generateUIView
 {
 
-//    float height = _Scrollview.frame.size.height;
-//    float width = height/4;
 
-    // Start Selector
-    startArrow = [ [ UIImageView alloc] initWithFrame:CGRectMake(_frameView.frame.origin.x+100, _frameView.frame.origin.y-2, 16, 50)];
-    startArrow.image=[UIImage imageNamed:@"Group 640"];
-    [startArrow setContentMode:UIViewContentModeScaleToFill];
+ 
+    //start Selector created
     [_Scrollview addSubview:startArrow];
     startArrow.backgroundColor = [ UIColor clearColor];
     [startArrow setUserInteractionEnabled:YES];
-
     UIPanGestureRecognizer *panGestureForStartArrow = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanForStartArrow:)];
     [startArrow addGestureRecognizer:panGestureForStartArrow];
 
 
+    // value for calculation in time
+    startArrowHalfWidth = (startArrow.frame.size.width/2);
+    endArrowHalfWidth = (endArrow.frame.size.width/2);
+    
+    
     // End Selector
-    endArrow = [ [ UIImageView alloc] initWithFrame:CGRectMake(_frameView.frame.origin.x+250, _frameView.frame.origin.y-2, 16, 50)];
-    endArrow.image = [ UIImage imageNamed:@"Group 639"];
-    [endArrow setContentMode:UIViewContentModeScaleToFill];
     [_Scrollview addSubview:endArrow];
     endArrow.backgroundColor = [ UIColor clearColor];
     [endArrow setUserInteractionEnabled:YES];
-
     UIPanGestureRecognizer *panGestureForEndArrow = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanForEndArrow:)];
     [endArrow addGestureRecognizer:panGestureForEndArrow];
-
-
-}
-//
-//#pragma mark - Handling Pan gesture of Start Arrow
-
-- (void) handlePanForStartArrow:(UIPanGestureRecognizer*) gesture {
-
-  [movingview removeFromSuperview];
-    NSLog(@"Start Arrow");
-    CGPoint translation = [gesture translationInView:startArrow];
-    NSLog(@"%f %f",startArrow.center.x,endArrow.frame.size.width);
-
-    NSLog(@"%f %f",endArrow.center.x,endArrow.center.x-(endArrow.frame.size.width/2));
+   
     
+    // Pan gesture for Moving arrow
+    [_Scrollview addSubview:_movingView];
+    [_movingView setUserInteractionEnabled:YES];
+    UIPanGestureRecognizer *panGestureMovingArrow = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanForMovingArrow:)];
+    [_movingView addGestureRecognizer:panGestureMovingArrow];
+    
+    
+    
+    
+}
+
+#pragma mark - Pan gestur for Moving Arrow
+- (void) handlePanForMovingArrow:(UIPanGestureRecognizer*) gesture {
+    if(gesture.state == UIGestureRecognizerStateBegan){
+        [self.player pause];
+        playButtonClicked=0;
+    
+    }
+    
+   
+    CGPoint translation = [gesture translationInView:_movingView ];
+    NSLog(@"%f",translation.x);
+    
+  
+    if(translation.x<0){
+        
+        [_movingView setCenter:CGPointMake(_movingView.center.x+translation.x, _movingView.center.y)];
+        [_startLabel setCenter:CGPointMake(startArrow.center.x+translation.x, _startLabel.center.y)];
+        
+    }
+    
+    else{
+//        [_startLabel setCenter:CGPointMake(startArrow.center.x+translation.x, _startLabel.center.y)];
+        
+         [_movingView setCenter:CGPointMake(_movingView.center.x+translation.x, _movingView.center.y)];
+    }
+    
+    
+    
+    
+    
+    [gesture setTranslation:CGPointZero inView:_movingView];
+    
+    val = (Time*((_movingView.center.x)))/_frameView.frame.size.width;
+    //creating time into string
+    NSDateComponentsFormatter *dcFormatter = [[NSDateComponentsFormatter alloc] init];
+    dcFormatter.zeroFormattingBehavior = NSDateComponentsFormatterZeroFormattingBehaviorPad;
+    dcFormatter.allowedUnits =NSCalendarUnitMinute|NSCalendarUnitSecond ;
+    dcFormatter.unitsStyle = NSDateComponentsFormatterUnitsStylePositional;
+    NSString* result=[dcFormatter stringFromTimeInterval:val];
+    
+    NSLog(@"%@",result);
+    
+    
+    
+    startTime=CMTimeMakeWithSeconds(val, NSEC_PER_SEC);
+    [self.player seekToTime:startTime toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
+    
+  
+        _startLabel.text=@"";
+        _startLabel.textColor= [ UIColor whiteColor];
+        _midLabel.textColor= [ UIColor whiteColor];
+        _midLabel.text=result;
+ 
+    
+}
+    
+    
+    
+
+
+
+#pragma mark - Handling Pan gesture of Start Arrow
+- (void) handlePanForStartArrow:(UIPanGestureRecognizer*) gesture {
+    
+    
+    if(trimPressed){
+        [self trimPressed];
+    }
+    else if(cutPressed){
+        
+        [self cutPressed];
+        
+        
+    }
+    
+    
+    
+    
+//    NSLog(@"%f %f",startArrow.center.x,startArrowHalfWidth);
+    
+    
+    
+    [self.player pause];
+    
+    //Time calculation and seek to time
+    val = (Time*((startArrow.center.x-startArrowHalfWidth)))/_frameView.frame.size.width;
+    startTime=CMTimeMakeWithSeconds(val, NSEC_PER_SEC);
+    [self.player seekToTime:startTime toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
+    
+    
+    //creating time into string
+    NSDateComponentsFormatter *dcFormatter = [[NSDateComponentsFormatter alloc] init];
+    dcFormatter.zeroFormattingBehavior = NSDateComponentsFormatterZeroFormattingBehaviorPad;
+    dcFormatter.allowedUnits =NSCalendarUnitMinute|NSCalendarUnitSecond ;
+    dcFormatter.unitsStyle = NSDateComponentsFormatterUnitsStylePositional;
+    NSString* result=[dcFormatter stringFromTimeInterval:val];
+    
+    _startLabel.textColor=[UIColor whiteColor];
+    _startLabel.text = result;
+
+    
+    
+    double cngValue = _startLabel.frame.size.width;
+    cngValue =cngValue/3;
+    
+    
+
+
+    CGPoint translation = [gesture translationInView:startArrow];
+    NSLog(@"%f",translation.x);
     
     if(translation.x<0){
+        
         [startArrow setCenter:CGPointMake(startArrow.center.x+translation.x, startArrow.center.y)];
-    
+        [_startLabel setCenter:CGPointMake(startArrow.center.x+translation.x, _startLabel.center.y)];
+       
+        if(startArrow.center.x<((startArrowHalfWidth))){
+            
+            [startArrow setCenter:CGPointMake(0+(startArrowHalfWidth), endArrow.center.y)];
+        }
+
     }
-    if(startArrow.center.x+(endArrow.frame.size.width/2)<endArrow.center.x-(endArrow.frame.size.width/2)) [ startArrow setCenter:CGPointMake(startArrow.center.x+translation.x, startArrow.center.y)];
     
-    //If still moves away
-     if(startArrow.center.x+(endArrow.frame.size.width/2)>endArrow.center.x-(endArrow.frame.size.width/2))
-    [ startArrow setCenter:CGPointMake(endArrow.center.x-startArrow.frame.size.width, startArrow.center.y)];
-    
-
-    if(startArrow.center.x<((endArrow.frame.size.width/2)/2)){
-
-        [startArrow setCenter:CGPointMake(0+(endArrow.frame.size.width/2), endArrow.center.y)];
+    else{
+           [_startLabel setCenter:CGPointMake(startArrow.center.x+translation.x, _startLabel.center.y)];
+   
+        if(startArrow.center.x+startArrowHalfWidth < endArrow.center.x-endArrowHalfWidth){
+            
+            [ startArrow setCenter:CGPointMake(startArrow.center.x+translation.x, startArrow.center.y)];
+            
+        }
+        
+        //If still moves away
+        if(startArrow.center.x+startArrowHalfWidth > endArrow.center.x-endArrowHalfWidth){
+            [ startArrow setCenter:CGPointMake(endArrow.center.x-startArrow.frame.size.width, startArrow.center.y)];
+        
+          }
     }
 
+
+    if(startArrow.center.x<2* cngValue)
+    {
+        [_startLabel setCenter:CGPointMake(startArrow.center.x+translation.x, _startLabel.center.y)];
+    }
+    
+    
     [gesture setTranslation:CGPointZero inView:startArrow];
+    if(gesture.state == UIGestureRecognizerStateEnded)
+    {
+        _startLabel.text=@"";
+        _startLabel.textColor= [ UIColor whiteColor];
+        _midLabel.textColor= [ UIColor whiteColor];
+        _midLabel.text=result;
+    }
 
 }
+
+
+
+
 
 #pragma mark - for Handling pan gesture of End Arrow
 - (void) handlePanForEndArrow:(UIPanGestureRecognizer*) gesture {
+    
+    
+    
+    if(trimPressed){
+        [self trimPressed];
+    }
+    else if(cutPressed){
+        
+        [self cutPressed];
+        
+    }
+    
+    
+    
+    
+    
+//    NSLog(@"%f",endArrow.center.x);
+    [self.player pause];
+    playButtonClicked=0;
+//    [_movingView setCenter:CGPointMake(-1000, _movingView.center.y)];
+    val1=(Time*(endArrow.center.x-2*endArrowHalfWidth))/_frameView.frame.size.width;
+    endTime=CMTimeMakeWithSeconds(val1, NSEC_PER_SEC);
+    [self.player seekToTime:endTime toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
+    
+    /// Converting seconds into result
+    NSDateComponentsFormatter *dcFormatter = [[NSDateComponentsFormatter alloc] init];
+    dcFormatter.zeroFormattingBehavior = NSDateComponentsFormatterZeroFormattingBehaviorPad;
+    dcFormatter.allowedUnits = NSCalendarUnitMinute|NSCalendarUnitSecond ;
+    dcFormatter.unitsStyle = NSDateComponentsFormatterUnitsStylePositional;
+    NSString* result=[dcFormatter stringFromTimeInterval:val1];
 
-
-
+//    NSLog(@"%@",result);
+    
     CGPoint translation = [gesture translationInView:endArrow];
-     NSLog(@"%f",translation.x);
-     NSLog(@"Changed ----%f %f-------",startArrow.center.x,endArrow.center.x);
-    if(translation.x>0) [endArrow setCenter:CGPointMake(endArrow.center.x+translation.x, endArrow.center.y)];
 
-     if(startArrow.center.x+(startArrow.frame.size.width/2)<endArrow.center.x-(startArrow.frame.size.width/2))[endArrow setCenter:CGPointMake(endArrow.center.x+translation.x, endArrow.center.y)];
+    
+    _endLabel.textColor=[UIColor whiteColor];
+    _endLabel.text = result;
 
-    //if still moves way
-    if(startArrow.center.x+(startArrow.frame.size.width/2)>endArrow.center.x)
+    double cngValue = _endLabel.frame.size.width;
+    cngValue =cngValue/3;
+
+
+    if(translation.x>0){
+        
+        [endArrow setCenter:CGPointMake(endArrow.center.x+translation.x, endArrow.center.y)];
+        [_endLabel setCenter:CGPointMake(endArrow.center.x+translation.x, _endLabel.center.y)];
+       
+        
+        
+        //Gets outside of the boundary
+        if(endArrow.center.x>_Scrollview.frame.size.width-(endArrow.frame.size.width/2)){
+            
+            [endArrow setCenter:CGPointMake(_Scrollview.frame.size.width-((endArrow.frame.size.width/2)), endArrow.center.y)];
+            
+            
+        }
+        
+    }
+    
+    
+    else{
+          [_endLabel setCenter:CGPointMake(endArrow.center.x+translation.x, _endLabel.center.y)];
+       
+        if(startArrow.center.x+startArrowHalfWidth<endArrow.center.x-endArrowHalfWidth){
+            [endArrow setCenter:CGPointMake(endArrow.center.x+translation.x, endArrow.center.y)];
+        
+        }
+        
+        //if still moves way
+        if(startArrow.center.x+(startArrow.frame.size.width/2)>endArrow.center.x)
+        {
+            [endArrow setCenter:CGPointMake(startArrow.center.x+startArrow.frame.size.width, endArrow.center.y)];
+        }
+    }
+    
+    
+    //Did here so that _endlabel jate baire na jay
+    
+    if(endArrow.center.x>_Scrollview.frame.size.width-(2* cngValue))
     {
-        [endArrow setCenter:CGPointMake(startArrow.center.x+startArrow.frame.size.width, endArrow.center.y)];
+        [_endLabel setCenter:CGPointMake(endArrow.center.x+translation.x-cngValue, _endLabel.center.y)];
     }
-
-    if(endArrow.center.x>_Scrollview.frame.size.width-(_Scrollview.frame.size.height/4)/2){
-
-        [endArrow setCenter:CGPointMake(_Scrollview.frame.size.width-((_Scrollview.frame.size.height/4)/2), endArrow.center.y)];
-    }
-
+    
 
     [gesture setTranslation:CGPointZero inView:endArrow];
+   
+
+ if(gesture.state == UIGestureRecognizerStateEnded)
+ {
+  
+     _endLabel.text = @"";
+     _endLabel.textColor = [ UIColor whiteColor];
+     _midLabel.textColor= [ UIColor whiteColor];
+     _midLabel.text=result;
+ }
+
 
 }
-
 
 /*
 #pragma mark - Navigation
