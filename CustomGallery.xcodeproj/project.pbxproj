@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A02A9B272287CD8400825954 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A02A9B262287CD8400825954 /* Photos.framework */; };
 		A0353EE8228049FE009EB466 /* segmentedControl.m in Sources */ = {isa = PBXBuildFile; fileRef = A0353EE7228049FE009EB466 /* segmentedControl.m */; };
 		A098EDC92271DD0F0007874A /* EndArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A098EDC82271DD0F0007874A /* EndArrow.png */; };
 		A098EDCB2271DD160007874A /* StartArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A098EDCA2271DD150007874A /* StartArrow.png */; };
@@ -45,6 +46,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A02A9B262287CD8400825954 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 		A0353EE6228049FE009EB466 /* segmentedControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = segmentedControl.h; sourceTree = "<group>"; };
 		A0353EE7228049FE009EB466 /* segmentedControl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = segmentedControl.m; sourceTree = "<group>"; };
 		A098EDC82271DD0F0007874A /* EndArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = EndArrow.png; sourceTree = "<group>"; };
@@ -84,6 +86,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A02A9B272287CD8400825954 /* Photos.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -104,6 +107,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		A02A9B252287CD8400825954 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A02A9B262287CD8400825954 /* Photos.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		A0D3E525227062AB0087574E = {
 			isa = PBXGroup;
 			children = (
@@ -111,6 +122,7 @@
 				A0D3E549227062AB0087574E /* CustomGalleryTests */,
 				A0D3E554227062AB0087574E /* CustomGalleryUITests */,
 				A0D3E52F227062AB0087574E /* Products */,
+				A02A9B252287CD8400825954 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};

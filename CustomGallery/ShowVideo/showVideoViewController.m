@@ -8,6 +8,8 @@
 
 #import "showVideoViewController.h"
 #import "PlayerView.h"
+#import <AssetsLibrary/AssetsLibrary.h>
+#import <Photos/Photos.h>
 
 
 @interface showVideoViewController ()
@@ -81,7 +83,7 @@ bool splitPressed = NO;
     self.navigationItem.leftBarButtonItem.enabled = YES;
     
     UIImage *rgtbtnImage = [ UIImage imageNamed:@"Path 844"];
-    UIBarButtonItem *rgtBtn= [ [ UIBarButtonItem alloc] initWithImage:rgtbtnImage style:UIBarButtonItemStylePlain target:self action:nil];
+    UIBarButtonItem *rgtBtn= [ [ UIBarButtonItem alloc] initWithImage:rgtbtnImage style:UIBarButtonItemStylePlain target:self action:@selector(doneBtnPressed)];
     self.navigationItem.rightBarButtonItem =  rgtBtn;
     self.navigationItem.rightBarButtonItem.enabled = YES;
 //    self.navigationItem.rightBarButtonItem.tintColor=[UIColor colorWithRed:255 green:125 blue:38 alpha:1];
@@ -235,6 +237,375 @@ bool splitPressed = NO;
     
     
 }
+
+#pragma mark - Done Button Pressed
+
+
+-(void) doneBtnPressed
+{
+ 
+    if(cutPressed)
+    {
+        [self videoCropFromAsset];
+    }
+    
+    else if(trimPressed)
+    {
+        [ self videoTrimFromAsset];
+    }
+    else{
+        [self videoSplitFromAsset];
+    }
+        
+}
+
+
+
+-(void) videoCropFromAsset
+{
+    
+    
+    
+    val = (Time*((startArrow.center.x-startArrowHalfWidth)))/_frameView.frame.size.width;
+    val1=(Time*(endArrow.center.x-2*endArrowHalfWidth))/_frameView.frame.size.width;
+    
+    
+    startTime=CMTimeMakeWithSeconds(val, NSEC_PER_SEC);
+    endTime = CMTimeMakeWithSeconds(val1, NSEC_PER_SEC);
+  
+    
+
+    CMTimeRange range = CMTimeRangeMake(startTime, endTime);
+
+
+
+    AVMutableComposition *mutableComposition = [AVMutableComposition composition];
+    AVMutableCompositionTrack *videoCompositionTrack = [mutableComposition addMutableTrackWithMediaType:AVMediaTypeVideo preferredTrackID:kCMPersistentTrackID_Invalid];
+    AVAssetTrack *videoAssetTrack = [resultAsset tracksWithMediaType:AVMediaTypeVideo].lastObject;
+    AVMutableCompositionTrack *audioCompositionTrack = [mutableComposition addMutableTrackWithMediaType:AVMediaTypeAudio preferredTrackID:kCMPersistentTrackID_Invalid];
+    AVAssetTrack *audioAssetTrack = [resultAsset tracksWithMediaType:AVMediaTypeAudio].lastObject;
+    CMTime time = kCMTimeZero;
+    NSError *videoError;
+    [videoCompositionTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, videoAssetTrack.timeRange.duration)
+                                   ofTrack:videoAssetTrack
+                                    atTime:time
+                                     error:&videoError];
+    [audioCompositionTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, videoAssetTrack.timeRange.duration)
+                                   ofTrack:audioAssetTrack
+                                    atTime:time
+                                     error:&videoError];
+    [videoCompositionTrack removeTimeRange:range];
+    [audioCompositionTrack removeTimeRange:range];
+    if (videoError) {
+        NSLog(@"Error - %@", videoError.debugDescription);
+    }
+    
+    AVAssetExportSession *exportSession = [[AVAssetExportSession alloc] initWithAsset:mutableComposition presetName:AVAssetExportPresetHighestQuality];
+    
+    NSURL *outputVideoURL=dataFilePath(@"tmpPost.mp4"); //url of exportedVideo
+    
+    exportSession.outputURL = outputVideoURL;
+    
+    exportSession.shouldOptimizeForNetworkUse = YES;
+    
+    exportSession.outputFileType = AVFileTypeQuickTimeMovie;
+    
+    /**
+     
+     creating the time range i.e. make startTime and endTime.
+     
+     startTime should be the first frame time at which your exportedVideo should start.
+     
+     endTime is the time of last frame at which your exportedVideo should stop. OR it should be the duration of the         excpected exportedVideo length
+     
+     **/
+    
+    
+    exportSession.timeRange = videoCompositionTrack.timeRange;
+    
+    [exportSession exportAsynchronouslyWithCompletionHandler:^(void){
+        
+        switch (exportSession.status)
+        
+        {
+                
+            case
+            AVAssetExportSessionStatusCompleted:
+                
+            {
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    
+                    NSURL *finalUrl=dataFilePath(@"trimmedVideo.mp4");
+                    
+                    NSData *urlData = [NSData dataWithContentsOfURL:outputVideoURL];
+                    
+                    NSError *writeError;
+                    
+                    //write exportedVideo to path/trimmedVideo.mp4
+                    
+                    [urlData writeToURL:finalUrl options:NSAtomicWrite error:&writeError];
+                    
+                    if (!writeError) {
+                        
+                        //update Original URL
+                        
+                        // originalURL=finalUrl;
+                        NSLog(@"saving");
+                        dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0ul);
+                        dispatch_async(q, ^{
+                            
+                            NSData *videoData = [NSData dataWithContentsOfURL:finalUrl];
+                            
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                
+                                // Write it to cache directory
+                                NSString *videoPath = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"file.mov"];
+                                [videoData writeToFile:videoPath atomically:YES];
+                                
+                                // After that use this path to save it to PhotoLibrary
+                                ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+                                [library writeVideoAtPathToSavedPhotosAlbum:[NSURL fileURLWithPath:videoPath] completionBlock:^(NSURL *assetURL, NSError *error)
+                                 {
+                                     if (error)
+                                     {
+                                         NSLog(@"Error");
+                                     }
+                                     else
+                                     {
+                                         NSString *message = @"Video Cut Done";
+                                         UIAlertView *toast = [[UIAlertView alloc] initWithTitle:nil
+                                                                                         message:message
+                                                                                        delegate:nil
+                                                                               cancelButtonTitle:nil
+                                                                               otherButtonTitles:nil, nil];
+                                         [toast show];
+                                         
+                                         int duration = 1; // duration in seconds
+                                         
+                                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, duration * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                             [toast dismissWithClickedButtonIndex:0 animated:YES];
+                                         });
+                                         
+                                         NSLog(@"Success");
+                                     }
+                                     
+                                 }];
+                            });
+                        });
+                        
+                        //update video Properties
+                        
+                        // [self updateParameters];
+                        
+                    }
+                    
+                    NSLog(@"Cut Done %ld %@", (long)exportSession.status, exportSession.error);
+                    
+                });
+                
+                
+            }
+                
+                break;
+                
+            case AVAssetExportSessionStatusFailed:
+                
+                NSLog(@"Cut failed with error ===>>> %@",exportSession.error);
+                
+                break;
+                
+            case AVAssetExportSessionStatusCancelled:
+                
+                NSLog(@"Canceled:%@",exportSession.error);
+                
+                break;
+                
+            default:
+                
+                break;
+                
+        }
+        
+    }];
+    
+}
+
+
+#pragma mark - dataFilepathCreation
+NSURL * dataFilePath(NSString *path){
+    //creating a path for file and checking if it already exist if exist then delete it
+    NSString *outputPath = [[NSString alloc] initWithFormat:@"%@%@", NSTemporaryDirectory(), path];
+    
+    BOOL success;
+    
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    //check if file exist at outputPath
+    success = [fileManager fileExistsAtPath:outputPath];
+    
+    if (success) {
+        //delete if file exist at outputPath
+        success=[fileManager removeItemAtPath:outputPath error:nil];
+    }
+    
+    return [NSURL fileURLWithPath:outputPath];
+    
+}
+
+#pragma mark- video Trim
+-(void) videoTrimFromAsset
+{
+    NSLog(@"HERE");
+
+    AVAssetExportSession *exportSession = [[AVAssetExportSession alloc] initWithAsset:resultAsset presetName:AVAssetExportPresetHighestQuality];
+    
+    NSURL *outputVideoURL=dataFilePath(@"tmpPost.mp4");;
+    
+    exportSession.outputURL = outputVideoURL;
+    
+    exportSession.shouldOptimizeForNetworkUse = YES;
+    
+    exportSession.outputFileType = AVFileTypeQuickTimeMovie;
+    
+   
+    
+    val = (Time*((startArrow.center.x-startArrowHalfWidth)))/_frameView.frame.size.width;
+    val1=(Time*(endArrow.center.x-2*endArrowHalfWidth))/_frameView.frame.size.width;
+    
+   
+    startTime=CMTimeMakeWithSeconds(val, NSEC_PER_SEC);
+    endTime = CMTimeMakeWithSeconds(val1, NSEC_PER_SEC);
+    
+    CMTimeRange range = CMTimeRangeMake(startTime, endTime);
+    
+    exportSession.timeRange = range;
+    
+    
+        [exportSession exportAsynchronouslyWithCompletionHandler:^(void){
+    
+            switch (exportSession.status)
+    
+            {
+    
+                case
+                AVAssetExportSessionStatusCompleted:
+    
+                {
+    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+    
+                      NSURL *finalUrl=dataFilePath(@"trimmedVideo.mp4");
+    
+                        NSData *urlData = [NSData dataWithContentsOfURL:outputVideoURL];
+    
+                        NSError *writeError;
+    
+                        //write exportedVideo to path/trimmedVideo.mp4
+    
+                        [urlData writeToURL:finalUrl options:NSAtomicWrite error:&writeError];
+    
+                        if (!writeError) {
+    
+                            //update Original URL
+    
+                            // originalURL=finalUrl;
+                            NSLog(@"saving");
+                            dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0ul);
+                            dispatch_async(q, ^{
+    
+                                NSData *videoData = [NSData dataWithContentsOfURL:outputVideoURL];
+    
+                                dispatch_async(dispatch_get_main_queue(), ^{
+    
+                                    // Write it to cache directory
+                                    NSString *videoPath = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"file.mov"];
+                                    [videoData writeToFile:videoPath atomically:YES];
+    
+                                    // After that use this path to save it to PhotoLibrary
+                                    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+                                    [library writeVideoAtPathToSavedPhotosAlbum:[NSURL fileURLWithPath:videoPath] completionBlock:^(NSURL *assetURL, NSError *error)
+                                     {
+                                         if (error)
+                                         {
+                                             NSLog(@"Error");
+                                         }
+                                         else
+                                         {
+                                             NSString *message = @"Video Trim Done";
+                                             UIAlertView *toast = [[UIAlertView alloc] initWithTitle:nil
+                                                                                             message:message
+                                                                                            delegate:nil
+                                                                                   cancelButtonTitle:nil
+                                                                                   otherButtonTitles:nil, nil];
+                                             [toast show];
+    
+                                             int duration = 1; // duration in seconds
+    
+                                             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, duration * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                                 [toast dismissWithClickedButtonIndex:0 animated:YES];
+                                             });
+                                             NSLog(@"Success");
+                                         }
+    
+                                     }];
+                                });
+                            });
+    
+                            //update video Properties
+    
+                            // [self updateParameters];
+    
+                        }
+    
+                        NSLog(@"Trim Done %ld %@", (long)exportSession.status, exportSession.error);
+    
+                    });
+    
+    
+                }
+    
+                    break;
+    
+                case AVAssetExportSessionStatusFailed:
+    
+                    NSLog(@"Trim failed with error ===>>> %@",exportSession.error);
+    
+                    break;
+    
+                case AVAssetExportSessionStatusCancelled:
+    
+                    NSLog(@"Canceled:%@",exportSession.error);
+    
+                    break;
+    
+                default:
+    
+                    break;
+    
+            }
+    
+        }];
+}
+    
+
+
+
+-(void) videoSplitFromAsset
+{
+    
+    
+}
+    
+    
+
+
+
+
+
+
+
+
 
 #pragma  mark - back button is pressed
 
