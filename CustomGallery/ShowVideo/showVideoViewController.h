@@ -40,8 +40,19 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) IBOutlet UIImageView *endImage;
 @property (strong, nonatomic) IBOutlet UIView *splitView;
 
+
+
+
+
 // Container Size
 @property (nonatomic) CGSize containerSize;
+
+
+
+
+
+
+
 @end
 
 NS_ASSUME_NONNULL_END

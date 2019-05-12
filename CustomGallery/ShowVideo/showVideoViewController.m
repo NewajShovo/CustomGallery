@@ -136,7 +136,8 @@ bool splitPressed = NO;
     pore_nibo=total_no_frames/8;
     NSLog(@"%d",pore_nibo);
     
-  
+    _frameView.clipsToBounds = YES;
+    _frameView.layer.cornerRadius = (_frameView.frame.size.height/9);
 //   //Creating a UISlider
 
     myslider = [ [ UISlider alloc] initWithFrame:CGRectMake(0, SCREEN_HEIGHT-50, SCREEN_WIDTH, 50)];
@@ -150,11 +151,12 @@ bool splitPressed = NO;
     myslider.hidden=YES;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self generateFrame:resultAsset];
+        [self generateUIView];
         });
     
    
 //   [self generateFramefromvideo:resultAsset];
-    [self generateUIView];
+    
 
 
 }
@@ -198,18 +200,16 @@ bool splitPressed = NO;
     _movingView.image = [ UIImage imageNamed:@"Line 97"];
     _movingView.image = [ UIImage imageNamed:@"Line 97"];
     
-    NSLog(@"%f %f",_frameView.frame.origin.x,_Scrollview.frame.origin.x);
+    NSLog(@"%f %f",_frameView.frame.size.width,endArrow.center.x);
     
-    double shadowWidth = _Scrollview.frame.size.width- (endArrow.center.x+2*endArrowHalfWidth)+3;
-    
-    _endShadow.frame =CGRectMake(endArrow.frame.origin.x+endArrowHalfWidth, endArrow.frame.origin.y,shadowWidth,_Scrollview.frame.size.height);
+    double shadowWidth = _Scrollview.frame.size.width-endArrow.center.x-(_Scrollview.frame.size.width);
+    _endShadow.frame =CGRectMake(endArrow.center.x+endArrowHalfWidth, endArrow.frame.origin.y,shadowWidth+3,_Scrollview.frame.size.height);
     _endShadow.backgroundColor = [UIColor colorWithRed:41.f/255.f green:41.f/255.f blue:41.f/255.f alpha:.92];
-    
-    shadowWidth =(startArrow.center.x-startArrowHalfWidth+1)-_frameView.frame.origin.x;
-    
+  
+    shadowWidth =(startArrow.center.x-startArrowHalfWidth)-_frameView.frame.origin.x;
     _startShadow.frame =CGRectMake(startArrow.frame.origin.x-shadowWidth, startArrow.frame.origin.y, shadowWidth,_Scrollview.frame.size.height);
     _startShadow.backgroundColor = [UIColor colorWithRed:41.f/255.f green:41.f/255.f blue:41.f/255.f alpha:.92];
-    
+
 }
 - (void) cutPressed
 {
@@ -231,8 +231,9 @@ bool splitPressed = NO;
     
     _startImage.image = nil;
     _endImage.image  = nil;
+    _movingView.image = nil;
     _splitImage.image = [ UIImage imageNamed:@"Group 1033"];
-    
+    _splitView.frame = CGRectMake(_frameView.frame.origin.x+180, _frameView.frame.origin.y-2, _splitView.frame.size.width, _splitView.frame.size.height);
     
     
     
@@ -260,7 +261,7 @@ bool splitPressed = NO;
 }
 
 
-
+#pragma mark - VideoCropFromAsset
 -(void) videoCropFromAsset
 {
     
@@ -456,7 +457,6 @@ NSURL * dataFilePath(NSString *path){
 #pragma mark- video Trim
 -(void) videoTrimFromAsset
 {
-    NSLog(@"HERE");
 
     AVAssetExportSession *exportSession = [[AVAssetExportSession alloc] initWithAsset:resultAsset presetName:AVAssetExportPresetHighestQuality];
     
@@ -594,9 +594,269 @@ NSURL * dataFilePath(NSString *path){
 -(void) videoSplitFromAsset
 {
     
+    NSLog(@"videoSplitFromAsset---%f",_splitView.center.x);
+    
+    //First export session
+    AVAssetExportSession *exportSession = [[AVAssetExportSession alloc] initWithAsset:resultAsset presetName:AVAssetExportPresetHighestQuality];
+    NSURL *outputVideoURL=dataFilePath(@"tmpPost.mp4");;
+    exportSession.outputURL = outputVideoURL;
+    exportSession.shouldOptimizeForNetworkUse = YES;
+    exportSession.outputFileType = AVFileTypeQuickTimeMovie;
+    
+    //Second export session
+    AVAssetExportSession *exportSession1 = [[AVAssetExportSession alloc] initWithAsset:resultAsset presetName:AVAssetExportPresetHighestQuality];
+    NSURL *outputVideoURL1=dataFilePath(@"tmpPost1.mp4");;
+    exportSession1.outputURL = outputVideoURL1;
+    exportSession1.shouldOptimizeForNetworkUse = YES;
+    exportSession1.outputFileType = AVFileTypeQuickTimeMovie;
+    
+    
+    
+    //two time is calculated
+    val = (Time*((_splitView.center.x-startArrowHalfWidth)))/_frameView.frame.size.width;
+    val1=(Time*(_splitView.center.x-2*endArrowHalfWidth))/_frameView.frame.size.width;
+    startTime=CMTimeMakeWithSeconds(val, NSEC_PER_SEC);
+    endTime = CMTimeMakeWithSeconds(val1, NSEC_PER_SEC);
+    
+    
+    float initialTime =0;
+    CMTime initialCMTime = CMTimeMakeWithSeconds(initialTime, NSEC_PER_SEC);
+    
+    //Two ranges are taken
+    CMTimeRange range1 = CMTimeRangeMake(initialCMTime, startTime);
+    CMTimeRange range2 = CMTimeRangeMake(endTime, resultAsset.duration);
+    
+    
+    
+    
+    
+    
+ dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+
+      NSLog(@"exportSession1");
+    exportSession.timeRange = range1;
+    [exportSession exportAsynchronouslyWithCompletionHandler:^(void){
+
+        switch (exportSession.status)
+
+        {
+
+            case
+            AVAssetExportSessionStatusCompleted:
+
+            {
+
+              
+
+                    NSURL *finalUrl=dataFilePath(@"trimmedVideo.mp4");
+
+                    NSData *urlData = [NSData dataWithContentsOfURL:outputVideoURL];
+
+                    NSError *writeError;
+
+                    //write exportedVideo to path/trimmedVideo.mp4
+
+                    [urlData writeToURL:finalUrl options:NSAtomicWrite error:&writeError];
+
+                    if (!writeError) {
+
+                        //update Original URL
+
+                        // originalURL=finalUrl;
+                        NSLog(@"saving");
+                        dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0ul);
+                        dispatch_async(q, ^{
+
+                            NSData *videoData = [NSData dataWithContentsOfURL:outputVideoURL];
+
+                            dispatch_async(dispatch_get_main_queue(), ^{
+
+                                // Write it to cache directory
+                                NSString *videoPath = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"file.mov"];
+                                [videoData writeToFile:videoPath atomically:YES];
+
+                                // After that use this path to save it to PhotoLibrary
+                                ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+                                [library writeVideoAtPathToSavedPhotosAlbum:[NSURL fileURLWithPath:videoPath] completionBlock:^(NSURL *assetURL, NSError *error)
+                                 {
+                                     if (error)
+                                     {
+                                         NSLog(@"Error");
+                                     }
+                                     else
+                                     {
+                                         NSString *message = @"Split Done ";
+                                         UIAlertView *toast = [[UIAlertView alloc] initWithTitle:nil
+                                                                                         message:message
+                                                                                        delegate:nil
+                                                                               cancelButtonTitle:nil
+                                                                               otherButtonTitles:nil, nil];
+                                         [toast show];
+                                         
+                                         int duration = 1; // duration in seconds
+                                         
+                                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, duration * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                             [toast dismissWithClickedButtonIndex:0 animated:YES];
+                                         });
+                                         NSLog(@"Success");
+                                         NSLog(@"Success");
+                                     }
+
+                                 }];
+                            });
+                        });
+
+                        //update video Properties
+
+                        // [self updateParameters];
+
+                    }
+
+                    NSLog(@"Trim Done %ld %@", (long)exportSession.status, exportSession.error);
+
+            
+
+
+            }
+
+                break;
+
+            case AVAssetExportSessionStatusFailed:
+
+                NSLog(@"Trim failed with error ===>>> %@",exportSession.error);
+
+                break;
+
+            case AVAssetExportSessionStatusCancelled:
+
+                NSLog(@"Canceled:%@",exportSession.error);
+
+                break;
+
+            default:
+
+                break;
+
+        }
+
+    }];
+ });
+
+   
+   
+     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    NSLog(@"exportSession2");
+    exportSession1.timeRange = range2;
+    [exportSession1 exportAsynchronouslyWithCompletionHandler:^(void){
+
+        switch (exportSession1.status)
+
+        {
+
+            case
+            AVAssetExportSessionStatusCompleted:
+
+            {
+
+//                dispatch_async(dispatch_get_main_queue(), ^{
+
+                    NSURL *finalUrl1=dataFilePath(@"trimmedVideo1.mp4");
+
+                    NSData *urlData1 = [NSData dataWithContentsOfURL:outputVideoURL1];
+
+                    NSError *writeError1;
+
+                    //write exportedVideo to path/trimmedVideo.mp4
+
+                    [urlData1 writeToURL:finalUrl1 options:NSAtomicWrite error:&writeError1];
+
+                    if (!writeError1) {
+
+                        //update Original URL
+
+                        // originalURL=finalUrl;
+                        NSLog(@"saving");
+                        dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0ul);
+                        dispatch_async(q, ^{
+
+                            NSData *videoData = [NSData dataWithContentsOfURL:outputVideoURL1];
+
+                            dispatch_async(dispatch_get_main_queue(), ^{
+
+                                // Write it to cache directory
+                                NSString *videoPath = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"file1.mov"];
+                                [videoData writeToFile:videoPath atomically:YES];
+
+                                // After that use this path to save it to PhotoLibrary
+                                ALAssetsLibrary *library1 = [[ALAssetsLibrary alloc] init];
+                                [library1 writeVideoAtPathToSavedPhotosAlbum:[NSURL fileURLWithPath:videoPath] completionBlock:^(NSURL *assetURL, NSError *error)
+                                 {
+                                     if (error)
+                                     {
+                                         NSLog(@"Error");
+                                     }
+                                     else
+                                     {
+//                                         NSString *message = @"Split2 Done ";
+//                                         UIAlertView *toast = [[UIAlertView alloc] initWithTitle:nil
+//                                                                                         message:message
+//                                                                                        delegate:nil
+//                                                                               cancelButtonTitle:nil
+//                                                                               otherButtonTitles:nil, nil];
+//                                         [toast show];
+//
+//                                         int duration = 1; // duration in seconds
+//
+//                                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, duration * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+//                                             [toast dismissWithClickedButtonIndex:0 animated:YES];
+//                                         });
+//                                         NSLog(@"Success");
+                                     }
+
+                                 }];
+                            });
+                        });
+
+                        //update video Properties
+
+                        // [self updateParameters];
+
+                    }
+
+                    NSLog(@"Trim Done %ld %@", (long)exportSession1.status, exportSession1.error);
+
+//                });
+
+
+            }
+
+                break;
+
+            case AVAssetExportSessionStatusFailed:
+
+                NSLog(@"Trim failed with error ===>>> %@",exportSession1.error);
+
+                break;
+
+            case AVAssetExportSessionStatusCancelled:
+
+                NSLog(@"Canceled:%@",exportSession1.error);
+
+                break;
+
+            default:
+
+                break;
+
+        }
+
+    }];
+     });
+ 
+    
+    
     
 }
-    
     
 
 
@@ -934,6 +1194,7 @@ double xxx=0;
 
 
     // value for calculation in time
+    NSLog(@"generate %f",startArrow.frame.size.width);
     startArrowHalfWidth = (startArrow.frame.size.width/2);
     endArrowHalfWidth = (endArrow.frame.size.width/2);
     
@@ -953,11 +1214,23 @@ double xxx=0;
     [_movingView addGestureRecognizer:panGestureMovingArrow];
     
     
+    //Pan gesture for Split view
+    
+    
+    [_Scrollview addSubview:_splitView];
+    [_splitView setUserInteractionEnabled:YES];
+    UIPanGestureRecognizer *panGestureSplitView = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanForSplitView:)];
+    [_splitView addGestureRecognizer:panGestureSplitView];
+    
+    
+    
+    
+    
     
     
 }
 
-#pragma mark - Pan gestur for Moving Arrow
+#pragma mark - Pan gesture for Moving Arrow
 - (void) handlePanForMovingArrow:(UIPanGestureRecognizer*) gesture {
     if(gesture.state == UIGestureRecognizerStateBegan){
         [self.player pause];
@@ -1031,11 +1304,14 @@ double xxx=0;
         
         
     }
+    else{
+        [self splitPressed];
+    }
     
     
     
     
-//    NSLog(@"%f %f",startArrow.center.x,startArrowHalfWidth);
+   NSLog(@"handle for start %f %f %f",startArrow.frame.size.width,startArrow.center.x,startArrowHalfWidth);
     
     
     
@@ -1131,7 +1407,9 @@ double xxx=0;
         [self cutPressed];
         
     }
-    
+    else{
+        [self splitPressed];
+    }
     
     
     
@@ -1219,6 +1497,17 @@ double xxx=0;
 
 
 }
+- (void) handlePanForSplitView:(UIPanGestureRecognizer*) gesture {
+    
+    NSLog(@"HERE");
+    CGPoint translation = [gesture translationInView:_splitView];
+    [_splitView setCenter:CGPointMake(_splitView.center.x+translation.x,_splitView.center.y )];
+    [gesture setTranslation:CGPointZero inView:_splitView];
+
+}
+    
+    
+    
 
 /*
 #pragma mark - Navigation
